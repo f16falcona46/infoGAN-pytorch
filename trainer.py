@@ -29,8 +29,11 @@ class Trainer:
 
         self.Discrete_Vars = Discrete_Vars
         self.Continuous_Vars = Continuous_Vars
+        self.Total_Vars = Discrete_Vars + Continuous_Vars
 
         self.Continuous_Steps = 12
+
+        self.Noise_Dim = 62
 
         self.batch_size = self.Discrete_Vars * self.Continuous_Steps
         self.Image_Width = 28
@@ -44,7 +47,7 @@ class Trainer:
         dis_c.data.copy_(torch.Tensor(c))
         con_c.data.uniform_(-1.0, 1.0)
         noise.data.uniform_(-1.0, 1.0)
-        z = torch.cat([noise, dis_c, con_c], 1).view(-1, 74, 1, 1)
+        z = torch.cat([noise, dis_c, con_c], 1).view(-1, self.Total_Vars, 1, 1)
 
         return z, idx
 
@@ -53,7 +56,7 @@ class Trainer:
         label = torch.FloatTensor(self.batch_size, 1).cuda()
         dis_c = torch.FloatTensor(self.batch_size, self.Discrete_Vars).cuda()
         con_c = torch.FloatTensor(self.batch_size, self.Continuous_Vars).cuda()
-        noise = torch.FloatTensor(self.batch_size, 62).cuda()
+        noise = torch.FloatTensor(self.batch_size, self.Noise_Dim).cuda()
 
         real_x = Variable(real_x)
         label = Variable(label, requires_grad=False)
@@ -87,7 +90,7 @@ class Trainer:
         idx = np.arange(self.Discrete_Vars).repeat(self.Continuous_Steps)
         one_hot = np.zeros((self.batch_size, self.Discrete_Vars))
         one_hot[range(self.batch_size), idx] = 1
-        fix_noise = torch.Tensor(self.batch_size, 62).uniform_(-1, 1)
+        fix_noise = torch.Tensor(self.batch_size, self.Noise_Dim).uniform_(-1, 1)
 
         for epoch in range(100):
             for num_iters, batch_data in enumerate(dataloader, 0):
@@ -101,7 +104,7 @@ class Trainer:
                 label.data.resize_(bs, 1)
                 dis_c.data.resize_(bs, self.Discrete_Vars)
                 con_c.data.resize_(bs, self.Continuous_Vars)
-                noise.data.resize_(bs, 62)
+                noise.data.resize_(bs, self.Noise_Dim)
 
                 real_x.data.copy_(x)
                 fe_out1 = self.FE(real_x)
@@ -154,7 +157,7 @@ class Trainer:
 
                     for i in range(self.Continuous_Vars):
                         con_c.data.copy_(torch.from_numpy(continuous_vars[i]))
-                        z = torch.cat([noise, dis_c, con_c], 1).view(-1, 74, 1, 1)
+                        z = torch.cat([noise, dis_c, con_c], 1).view(-1, self.Total_Vars, 1, 1)
                         x_save = self.G(z)
 
                         #NOTE: nrow is actually images PER ROW! NOT the number of rows!
