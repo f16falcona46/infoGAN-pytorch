@@ -16,7 +16,7 @@ def main():
         i.cuda()
         i.apply(weights_init)
 
-    trainer = Trainer(g, fe, d, q, Discrete_Vars, Continuous_Vars, Noise_Vars, 28, 28)
+    trainer = Trainer(g, fe, d, q, Discrete_Vars, Continuous_Vars, Noise_Vars, 28, 28, 100)
     trainer.train()
 
 if __name__ == "__main__":

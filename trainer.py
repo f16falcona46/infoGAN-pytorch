@@ -21,7 +21,7 @@ class log_gaussian:
 
 
 class Trainer:
-    def __init__(self, G, FE, D, Q, Discrete_Vars, Continuous_Vars, Noise_Dim, Image_Width, Image_Height):
+    def __init__(self, G, FE, D, Q, Discrete_Vars, Continuous_Vars, Noise_Vars, Image_Width, Image_Height, batch_size):
         self.G = G
         self.FE = FE
         self.D = D
@@ -29,13 +29,14 @@ class Trainer:
 
         self.Discrete_Vars = Discrete_Vars
         self.Continuous_Vars = Continuous_Vars
-        self.Total_Vars = Discrete_Vars + Continuous_Vars
+        self.Total_Vars = Discrete_Vars + Continuous_Vars + Noise_Vars
 
         self.Continuous_Steps = 12
 
-        self.Noise_Dim = Noise_Dim
+        self.Noise_Vars = Noise_Vars
 
-        self.batch_size = self.Discrete_Vars * self.Continuous_Steps
+        self.batch_size = batch_size
+        self.Progress_Batch_Size = self.Discrete_Vars * self.Continuous_Steps
         self.Image_Width = Image_Width
         self.Image_Height = Image_Height
 
@@ -52,17 +53,17 @@ class Trainer:
         return z, idx
 
     def train(self):
-        real_x = torch.FloatTensor(self.batch_size, 1, self.Image_Width, self.Image_Height).cuda()
-        label = torch.FloatTensor(self.batch_size, 1).cuda()
-        dis_c = torch.FloatTensor(self.batch_size, self.Discrete_Vars).cuda()
-        con_c = torch.FloatTensor(self.batch_size, self.Continuous_Vars).cuda()
-        noise = torch.FloatTensor(self.batch_size, self.Noise_Dim).cuda()
+        real_x_tensor = torch.FloatTensor(self.batch_size, 1, self.Image_Width, self.Image_Height).cuda()
+        label_tensor = torch.FloatTensor(self.batch_size, 1).cuda()
+        dis_c_tensor = torch.FloatTensor(self.batch_size, self.Discrete_Vars).cuda()
+        con_c_tensor = torch.FloatTensor(self.batch_size, self.Continuous_Vars).cuda()
+        noise_tensor = torch.FloatTensor(self.batch_size, self.Noise_Vars).cuda()
 
-        real_x = Variable(real_x)
-        label = Variable(label, requires_grad=False)
-        dis_c = Variable(dis_c)
-        con_c = Variable(con_c)
-        noise = Variable(noise)
+        real_x = Variable(real_x_tensor)
+        label = Variable(label_tensor, requires_grad=False)
+        dis_c = Variable(dis_c_tensor)
+        con_c = Variable(con_c_tensor)
+        noise = Variable(noise_tensor)
 
         criterionD = nn.BCELoss().cuda()
         criterionQ_dis = nn.CrossEntropyLoss().cuda()
@@ -88,9 +89,13 @@ class Trainer:
                 [c] + [np.zeros_like(c) for j in range(self.Continuous_Vars - i - 1)]))
 
         idx = np.arange(self.Discrete_Vars).repeat(self.Continuous_Steps)
-        one_hot = np.zeros((self.batch_size, self.Discrete_Vars))
-        one_hot[range(self.batch_size), idx] = 1
-        fix_noise = torch.Tensor(self.batch_size, self.Noise_Dim).uniform_(-1, 1)
+        one_hot = np.zeros((self.Progress_Batch_Size, self.Discrete_Vars))
+        one_hot[range(self.Progress_Batch_Size), idx] = 1
+        fix_noise = torch.Tensor(self.Progress_Batch_Size, self.Noise_Vars).uniform_(-1, 1)
+        
+        dis_c_progress = Variable(dis_c_tensor)
+        con_c_progress = Variable(con_c_tensor)
+        noise_progress = Variable(noise_tensor)
 
         for epoch in range(100):
             for num_iters, batch_data in enumerate(dataloader, 0):
@@ -104,7 +109,7 @@ class Trainer:
                 label.data.resize_(bs, 1)
                 dis_c.data.resize_(bs, self.Discrete_Vars)
                 con_c.data.resize_(bs, self.Continuous_Vars)
-                noise.data.resize_(bs, self.Noise_Dim)
+                noise.data.resize_(bs, self.Noise_Vars)
 
                 real_x.data.copy_(x)
                 fe_out1 = self.FE(real_x)
@@ -151,13 +156,15 @@ class Trainer:
                         epoch, num_iters, D_loss.data.cpu().numpy(),
                         G_loss.data.cpu().numpy())
                     )
-
-                    noise.data.copy_(fix_noise)
-                    dis_c.data.copy_(torch.Tensor(one_hot))
+                    dis_c_progress.data.resize_(self.Progress_Batch_Size, self.Discrete_Vars)
+                    con_c_progress.data.resize_(self.Progress_Batch_Size, self.Continuous_Vars)
+                    noise_progress.data.resize_(self.Progress_Batch_Size, self.Noise_Vars)
+                    noise_progress.data.copy_(fix_noise)
+                    dis_c_progress.data.copy_(torch.Tensor(one_hot))
 
                     for i in range(self.Continuous_Vars):
                         con_c.data.copy_(torch.from_numpy(continuous_vars[i]))
-                        z = torch.cat([noise, dis_c, con_c], 1).view(-1, self.Total_Vars, 1, 1)
+                        z = torch.cat([noise_progress, dis_c_progress, con_c_progress], 1).view(-1, self.Total_Vars, 1, 1)
                         x_save = self.G(z)
 
                         #NOTE: nrow is actually images PER ROW! NOT the number of rows!
