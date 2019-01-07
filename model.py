@@ -62,11 +62,11 @@ class Q(nn.Module):
 
 class G(nn.Module):
 
-    def __init__(self):
+    def __init__(self, Total_Vars):
         super(G, self).__init__()
 
         self.main = nn.Sequential(
-            nn.ConvTranspose2d(74, 1024, 1, 1, bias=False),
+            nn.ConvTranspose2d(Total_Vars, 1024, 1, 1, bias=False),
             nn.BatchNorm2d(1024),
             nn.ReLU(True),
             nn.ConvTranspose2d(1024, 128, 7, 1, bias=False),

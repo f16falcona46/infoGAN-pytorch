@@ -21,7 +21,7 @@ class log_gaussian:
 
 
 class Trainer:
-    def __init__(self, G, FE, D, Q, Discrete_Vars, Continuous_Vars):
+    def __init__(self, G, FE, D, Q, Discrete_Vars, Continuous_Vars, Noise_Dim, Image_Width, Image_Height):
         self.G = G
         self.FE = FE
         self.D = D
@@ -33,11 +33,11 @@ class Trainer:
 
         self.Continuous_Steps = 12
 
-        self.Noise_Dim = 62
+        self.Noise_Dim = Noise_Dim
 
         self.batch_size = self.Discrete_Vars * self.Continuous_Steps
-        self.Image_Width = 28
-        self.Image_Height = 28
+        self.Image_Width = Image_Width
+        self.Image_Height = Image_Height
 
     def _noise_sample(self, dis_c, con_c, noise, bs):
         idx = np.random.randint(self.Discrete_Vars, size=bs)
