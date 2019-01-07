@@ -3,20 +3,21 @@ from trainer import Trainer
 
 
 def main():
-    Discrete_Vars = 10
-    Continuous_Vars = 2
-    Noise_Vars = 62
+    Discrete_Vars = 2
+    Continuous_Vars = 20
+    Noise_Vars = 16
+    OCT = True
 
-    fe = FrontEnd()
+    fe = FrontEnd(OCT)
     d = D()
-    q = Q()
-    g = G(Discrete_Vars + Continuous_Vars + Noise_Vars)
+    q = Q(Discrete_Vars, Continuous_Vars)
+    g = G(Discrete_Vars + Continuous_Vars + Noise_Vars, OCT)
 
     for i in [fe, d, q, g]:
         i.cuda()
         i.apply(weights_init)
 
-    trainer = Trainer(g, fe, d, q, Discrete_Vars, Continuous_Vars, Noise_Vars, 28, 28, 100)
+    trainer = Trainer(g, fe, d, q, Discrete_Vars, Continuous_Vars, Noise_Vars, 512, 512, 2, OCT)
     trainer.train()
 
 if __name__ == "__main__":

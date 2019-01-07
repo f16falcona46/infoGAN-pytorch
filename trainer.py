@@ -6,7 +6,7 @@ import torch.autograd as autograd
 
 import torchvision.datasets as dset
 import torchvision.transforms as transforms
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, TensorDataset
 from torchvision.utils import save_image
 
 import numpy as np
@@ -21,7 +21,7 @@ class log_gaussian:
 
 
 class Trainer:
-    def __init__(self, G, FE, D, Q, Discrete_Vars, Continuous_Vars, Noise_Vars, Image_Width, Image_Height, batch_size):
+    def __init__(self, G, FE, D, Q, Discrete_Vars, Continuous_Vars, Noise_Vars, Image_Width, Image_Height, batch_size, OCT = False):
         self.G = G
         self.FE = FE
         self.D = D
@@ -31,7 +31,7 @@ class Trainer:
         self.Continuous_Vars = Continuous_Vars
         self.Total_Vars = Discrete_Vars + Continuous_Vars + Noise_Vars
 
-        self.Continuous_Steps = 12
+        self.Continuous_Steps = 5
 
         self.Noise_Vars = Noise_Vars
 
@@ -39,6 +39,8 @@ class Trainer:
         self.Progress_Batch_Size = self.Discrete_Vars * self.Continuous_Steps
         self.Image_Width = Image_Width
         self.Image_Height = Image_Height
+
+        self.OCT = OCT
 
     def _noise_sample(self, dis_c, con_c, noise, bs):
         idx = np.random.randint(self.Discrete_Vars, size=bs)
@@ -74,10 +76,16 @@ class Trainer:
         optimG = optim.Adam([{'params': self.G.parameters()}, {
                             'params': self.Q.parameters()}], lr=0.001, betas=(0.5, 0.99))
 
-        dataset = dset.MNIST(
-            './dataset', transform=transforms.ToTensor(), download=True)
-        dataloader = DataLoader(
-            dataset, batch_size=self.batch_size, shuffle=True, num_workers=1)
+        if self.OCT:
+            OCT_images = np.load("./A/np/train/all.npy") / (1<<16)
+            dataset = TensorDataset(torch.Tensor(OCT_images))
+            dataloader = DataLoader(dataset, batch_size=self.batch_size, shuffle=True, num_workers=1)
+        else:
+            dataset = dset.MNIST(
+                './dataset', transform=transforms.ToTensor(), download=True)
+            dataloader = DataLoader(
+                dataset, batch_size=self.batch_size, shuffle=True, num_workers=1)
+
 
         # fixed random variables
         c = np.linspace(-1, 1, self.Continuous_Steps).reshape(1, -1)
@@ -102,7 +110,10 @@ class Trainer:
                 # real part
                 optimD.zero_grad()
 
-                x, _ = batch_data
+                if self.OCT:
+                    x = batch_data[0]
+                else:
+                    x, _ = batch_data
 
                 bs = x.size(0)
                 real_x.data.resize_(x.size())
@@ -150,7 +161,7 @@ class Trainer:
                 G_loss.backward()
                 optimG.step()
 
-                if num_iters % 100 == 0:
+                if num_iters == 0 and epoch % 5 == 0:
 
                     print('Epoch/Iter:{0}/{1}, Dloss: {2}, Gloss: {3}'.format(
                         epoch, num_iters, D_loss.data.cpu().numpy(),
