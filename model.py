@@ -8,17 +8,17 @@ class FrontEnd(nn.Module):
 
         if OCT:
             self.main = nn.Sequential(
-                nn.Conv2d(1, 64, 6, 2, 2),
+                nn.Conv2d(1, 64, 6, 2, 2, bias=False),
                 nn.LeakyReLU(0.1, inplace=True),
                 nn.MaxPool2d(4),
-                nn.Conv2d(64, 128, 6, 2, 2),
+                nn.Conv2d(64, 128, 6, 2, 2, bias=False),
                 nn.MaxPool2d(4),
                 nn.BatchNorm2d(128),
                 nn.LeakyReLU(0.1, inplace=True),
-                nn.Conv2d(128, 128, 6, 2, 2),
+                nn.Conv2d(128, 128, 6, 2, 2, bias=False),
                 nn.BatchNorm2d(128),
                 nn.LeakyReLU(0.1, inplace=True),
-                nn.Conv2d(128, 1024, 4),
+                nn.Conv2d(128, 1024, 4, bias=False),
                 nn.BatchNorm2d(1024),
                 nn.LeakyReLU(0.1, inplace=True),
             )
@@ -82,25 +82,24 @@ class G(nn.Module):
         super(G, self).__init__()
         if OCT:
             self.main = nn.Sequential(
-                nn.ConvTranspose2d(Total_Vars, 32, 4),
+                nn.ConvTranspose2d(Total_Vars, 32, 4, bias=False),
                 nn.BatchNorm2d(32),
                 nn.ReLU(True),
                 nn.Upsample(scale_factor = 8, mode='bilinear', align_corners=True),
                 #nn.ReflectionPad2d(1),
-                nn.Conv2d(32, 64, 4, 2, 1),
+                nn.Conv2d(32, 64, 4, 2, 1, bias=False),
                 nn.BatchNorm2d(64),
                 nn.ReLU(True),
                 nn.Upsample(scale_factor = 8, mode='bilinear', align_corners=True),
                 #nn.ReflectionPad2d(1),
-                nn.Conv2d(64, 32, 4, 2, 1),
+                nn.Conv2d(64, 32, 4, 2, 1, bias=False),
                 nn.BatchNorm2d(32),
                 nn.ReLU(True),
                 nn.Upsample(scale_factor = 8, mode='bilinear', align_corners=True),
                 #nn.ReflectionPad2d(1),
-                nn.Conv2d(32, 32, 5, 1, 2),
                 nn.BatchNorm2d(32),
                 nn.ReLU(True),
-                nn.ConvTranspose2d(32, 1, 3, 1, 1),
+                nn.ConvTranspose2d(32, 1, 3, 1, 1, bias=False),
                 nn.Sigmoid()
             )
         else:
