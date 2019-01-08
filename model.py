@@ -82,24 +82,22 @@ class G(nn.Module):
         super(G, self).__init__()
         if OCT:
             self.main = nn.Sequential(
-                nn.ConvTranspose2d(Total_Vars, 32, 4, bias=False),
-                nn.BatchNorm2d(32),
-                nn.ReLU(True),
-                nn.Upsample(scale_factor = 8, mode='bilinear', align_corners=True),
+                nn.Conv2d(Total_Vars, 128, 1),
+                nn.BatchNorm2d(128),
+                nn.ConvTranspose2d(128, 128, 6, 4, 1, bias=False),
+                nn.BatchNorm2d(128),
+                nn.LeakyReLU(0.1, inplace=True),
+                nn.ConvTranspose2d(128, 128, 8, 8, bias=False),
+                nn.BatchNorm2d(128),
+                nn.LeakyReLU(0.1, inplace=True),
+                nn.Upsample(scale_factor = 8, mode='nearest'),
                 #nn.ReflectionPad2d(1),
-                nn.Conv2d(32, 64, 4, 2, 1, bias=False),
-                nn.BatchNorm2d(64),
-                nn.ReLU(True),
-                nn.Upsample(scale_factor = 8, mode='bilinear', align_corners=True),
+                nn.Conv2d(128, 128, 4, 2, 1, bias=False),
+                nn.BatchNorm2d(128),
+                nn.LeakyReLU(0.1, inplace=True),
+                nn.Upsample(scale_factor = 8, mode='nearest'),
                 #nn.ReflectionPad2d(1),
-                nn.Conv2d(64, 32, 4, 2, 1, bias=False),
-                nn.BatchNorm2d(32),
-                nn.ReLU(True),
-                nn.Upsample(scale_factor = 8, mode='bilinear', align_corners=True),
-                #nn.ReflectionPad2d(1),
-                nn.BatchNorm2d(32),
-                nn.ReLU(True),
-                nn.ConvTranspose2d(32, 1, 3, 1, 1, bias=False),
+                nn.Conv2d(128, 1, 4, 2, 1, bias=False),
                 nn.Sigmoid()
             )
         else:

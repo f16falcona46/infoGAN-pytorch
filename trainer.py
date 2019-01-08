@@ -111,7 +111,7 @@ class Trainer:
         con_c_progress = Variable(con_c_tensor)
         noise_progress = Variable(noise_tensor)
 
-        for epoch in range(100):
+        for epoch in range(101):
             for num_iters, batch_data in enumerate(dataloader, 0):
                 # real part
                 optimD.zero_grad()
