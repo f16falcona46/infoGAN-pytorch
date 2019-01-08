@@ -20,6 +20,12 @@ class log_gaussian:
         return logli.sum(1).mean().mul(-1)
 
 
+def save_single_image(img, fname):
+    from PIL import Image
+    ndarr = img.mul(255).clamp(0, 255).byte()[0].permute(0, 1).cpu().numpy()
+    im = Image.fromarray(ndarr)
+    im.save(fname)
+
 class Trainer:
     def __init__(self, G, FE, D, Q, Discrete_Vars, Continuous_Vars, Noise_Vars, Image_Width, Image_Height, batch_size, OCT = False):
         self.G = G
@@ -181,3 +187,8 @@ class Trainer:
                         #NOTE: nrow is actually images PER ROW! NOT the number of rows!
                         save_image(x_save.data, './tmp/{:03d}_{:02d}_c{:02d}.png'.format(epoch, num_iters // 100, i),
                             nrow=self.Continuous_Steps)
+                        save_single_image(x[0], './tmp/{:03d}_{:02d}_first.png'.format(epoch, num_iters // 100, i))
+            torch.save(self.G.state_dict(), './netG_epoch_%d.pth' % (epoch))
+            torch.save(self.D.state_dict(), './netD_epoch_%d.pth' % (epoch))
+            torch.save(self.Q.state_dict(), './netQ_epoch_%d.pth' % (epoch))
+            torch.save(self.FE.state_dict(), './netFE_epoch_%d.pth' % (epoch))
