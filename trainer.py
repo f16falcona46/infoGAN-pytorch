@@ -37,7 +37,7 @@ class Trainer:
         self.Continuous_Vars = Continuous_Vars
         self.Total_Vars = Discrete_Vars + Continuous_Vars + Noise_Vars
 
-        self.Continuous_Steps = 5
+        self.Continuous_Steps = 4
 
         self.Noise_Vars = Noise_Vars
 

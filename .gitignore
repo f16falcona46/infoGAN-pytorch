@@ -92,3 +92,4 @@ ENV/
 dataset/
 tmp/
 A/
+*.pth
