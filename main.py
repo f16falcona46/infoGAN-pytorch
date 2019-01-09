@@ -3,10 +3,10 @@ from trainer import Trainer
 
 
 def main():
-    Discrete_Vars = 2
-    Continuous_Vars = 20
-    Noise_Vars = 16
-    OCT = True
+    Discrete_Vars = 10
+    Continuous_Vars = 4
+    Noise_Vars = 64
+    OCT = False
 
     fe = FrontEnd(OCT)
     d = D()
@@ -17,7 +17,7 @@ def main():
         i.cuda()
         i.apply(weights_init)
 
-    trainer = Trainer(g, fe, d, q, Discrete_Vars, Continuous_Vars, Noise_Vars, 512, 512, 2, OCT)
+    trainer = Trainer(g, fe, d, q, Discrete_Vars, Continuous_Vars, Noise_Vars, 28, 28, 100, OCT)
     trainer.train()
 
 if __name__ == "__main__":

@@ -37,7 +37,7 @@ class Trainer:
         self.Continuous_Vars = Continuous_Vars
         self.Total_Vars = Discrete_Vars + Continuous_Vars + Noise_Vars
 
-        self.Continuous_Steps = 4
+        self.Continuous_Steps = 10
 
         self.Noise_Vars = Noise_Vars
 
@@ -167,7 +167,7 @@ class Trainer:
                 G_loss.backward()
                 optimG.step()
 
-                if num_iters == 0 and epoch % 5 == 0:
+                if num_iters % 100 == 0:
 
                     print('Epoch/Iter:{0}/{1}, Dloss: {2}, Gloss: {3}'.format(
                         epoch, num_iters, D_loss.data.cpu().numpy(),
@@ -187,9 +187,10 @@ class Trainer:
                         #NOTE: nrow is actually images PER ROW! NOT the number of rows!
                         save_image(x_save.data, './tmp/{:03d}_{:02d}_c{:02d}.png'.format(epoch, num_iters // 100, i),
                             nrow=self.Continuous_Steps)
-                        #save_single_image(x[0], './tmp/{:03d}_{:02d}_first.png'.format(epoch, num_iters // 100, i))
-                        torch.save(self.G.state_dict(), './netG_epoch_%d.pth' % (epoch))
-                        torch.save(self.D.state_dict(), './netD_epoch_%d.pth' % (epoch))
-                        torch.save(self.Q.state_dict(), './netQ_epoch_%d.pth' % (epoch))
-                        torch.save(self.FE.state_dict(), './netFE_epoch_%d.pth' % (epoch))
+                        save_single_image(x[0], './tmp/{:03d}_{:02d}_first.png'.format(epoch, num_iters // 100, i))
+                        torch.save(self.G.state_dict(), './netG_epoch_%03d_iter_%02d.pth' % (epoch, num_iters // 100))
+                        torch.save(self.D.state_dict(), './netD_epoch_%03d_iter_%02d.pth' % (epoch, num_iters // 100))
+                        torch.save(self.Q.state_dict(), './netQ_epoch_%03d_iter_%02d.pth' % (epoch, num_iters // 100))
+                        torch.save(self.FE.state_dict(), './netFE_epoch_%03d_iter_%02d.pth' % (epoch, num_iters // 100))
             print("Epoch: {0}".format(epoch))
+    pass
